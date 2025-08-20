@@ -45,14 +45,9 @@ function App() {
 
     return (
         <NavigationContainer>
-            <Stack.Navigator>
-                {state.isOnboardingCompleted ? (
-                    // Onboarding completed, user is signed in
+            <Stack.Navigator initialRouteName={state.isOnboardingCompleted ? "Profile" : "Onboarding"}>
                     <Stack.Screen name="Profile" component={Profile} />
-                ) : (
-                    // User is NOT signed in
                     <Stack.Screen name="Onboarding" component={Onboarding} />
-                )}
             </Stack.Navigator>
         </NavigationContainer>
     );

@@ -5,7 +5,7 @@ import Button from "./Button";
 export default function ProfileHeader() {
     return (
         <View style={styles.container}>
-            <Button title="Profile" onPress={() => {}}>B</Button>
+            <Button title="Profile" onPress={() => {}}>←</Button>
             <Image source={require(("../assets/images/Logo.png"))} style={styles.image} />
 
             <Image style={styles.profileImg} source={require('../assets/images/Profile.png')} />

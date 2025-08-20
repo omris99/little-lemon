@@ -1,9 +1,11 @@
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import React from "react";
 
-export default function Button({style, buttonText, children}) {
+export default function Button({style, buttonText, children, onPress}) {
     return (
-        <Pressable>
+        <Pressable
+        onPress={onPress}
+        >
             <View style={[styles.button, style]}>
                 <Text style={[styles.buttonText, buttonText]}>{children}</Text>
             </View>
