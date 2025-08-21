@@ -1,59 +1,60 @@
-import Header from "../components/Header";
 import React, { useEffect, useState } from "react";
-import ProfileHeader from "../components/ProfileHeader";
-import {Text, View, StyleSheet, FlatList, Image} from "react-native";
+import { Text, View, StyleSheet, FlatList, Image } from "react-native";
 import * as SQLite from "expo-sqlite";
+import ProfileHeader from "../components/ProfileHeader";
 import HeroSection from "../components/HeroSection";
+import CategorySection from "../components/CategorySection";
 
 export default function Home({ navigation }) {
     const [menu, setMenu] = useState([]);
     const [loading, setLoading] = useState(true);
     const [db, setDb] = useState(null);
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [searchText, setSearchText] = useState("");
 
+    const toggleCategory = (category) => {
+        const normalized = category.toLowerCase();
+        setSelectedCategories((prev) =>
+            prev.includes(normalized)
+                ? prev.filter((c) => c !== normalized)
+                : [...prev, normalized]
+        );
+    };
+
+    // open/create DB and load menu
     useEffect(() => {
         (async () => {
-            const database = await SQLite.openDatabaseAsync("little_lemon.db");
+            const database = await SQLite.openDatabaseAsync("little_lemon_updated.db");
 
-            // create table
             await database.execAsync(`
-                CREATE TABLE IF NOT EXISTS menu
-                (
-                    id
-                    INTEGER
-                    PRIMARY
-                    KEY
-                    AUTOINCREMENT,
-                    name
-                    TEXT,
-                    price
-                    REAL,
-                    description
-                    TEXT,
-                    image
-                    TEXT
-                );
-            `);
+        CREATE TABLE IF NOT EXISTS menu
+        (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            price REAL,
+            description TEXT,
+            image TEXT,
+            category TEXT
+        );
+      `);
 
             setDb(database);
-
-            // load menu
             await loadMenu(database);
         })();
     }, []);
 
+    // load menu from DB or fetch from server
     const loadMenu = async (database) => {
         const rows = await database.getAllAsync("SELECT * FROM menu");
-
         if (rows.length > 0) {
-            // already in DB
             setMenu(rows);
             setLoading(false);
         } else {
-            // fetch and insert
             await fetchMenuFromServer(database);
         }
     };
 
+    // fetch menu from server
     const fetchMenuFromServer = async (database) => {
         try {
             const response = await fetch(
@@ -62,15 +63,22 @@ export default function Home({ navigation }) {
             const data = await response.json();
             const items = data.menu;
 
-            // insert each item
             for (const item of items) {
                 await database.runAsync(
-                    "INSERT INTO menu (name, price, description, image) VALUES (?, ?, ?, ?)",
-                    [item.name, item.price, item.description, item.image]
+                    "INSERT INTO menu (name, price, description, image, category) VALUES (?, ?, ?, ?, ?)",
+                    [
+                        item.name,
+                        item.price,
+                        item.description,
+                        item.image,
+                        item.category.toLowerCase(),
+                    ]
                 );
             }
 
-            setMenu(items);
+            // reload menu from DB
+            const rows = await database.getAllAsync("SELECT * FROM menu");
+            setMenu(rows);
         } catch (error) {
             console.error("Error fetching menu:", error);
         } finally {
@@ -78,8 +86,20 @@ export default function Home({ navigation }) {
         }
     };
 
+    // render each item, filter by category and search
     const renderItem = ({ item }) => {
+        const itemCategory = item.category ? item.category.toLowerCase() : "";
+        if (
+            (selectedCategories.length > 0 &&
+                !selectedCategories.includes(itemCategory)) ||
+            (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase()))
+        ) {
+            console.log(item.category);
+            return null;
+        }
+
         const imageUrl = `https://github.com/Meta-Mobile-Developer-PC/Working-With-Data-API/blob/main/images/${item.image}?raw=true`;
+
         return (
             <View style={styles.card}>
                 <View style={{ flex: 1 }}>
@@ -88,15 +108,19 @@ export default function Home({ navigation }) {
                     <Text style={styles.price}>${item.price}</Text>
                 </View>
                 <Image source={{ uri: imageUrl }} style={styles.image} />
-
             </View>
         );
     };
 
     return (
         <View style={styles.container}>
-            <ProfileHeader showBack={false}/>
-            <HeroSection/>
+            <ProfileHeader showBack={false} />
+            <HeroSection searchText={searchText} setSearchText={setSearchText} />
+            <Text style={styles.textAboveCategories}>ORDER FOR DELIVERY!</Text>
+            <CategorySection
+                selectedCategories={selectedCategories}
+                onToggleCategory={toggleCategory}
+            />
             {loading ? (
                 <Text style={styles.loading}>Loading menu...</Text>
             ) : (
@@ -111,35 +135,12 @@ export default function Home({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-    },
-    loading: {
-        marginTop: 20,
-        textAlign: "center",
-    },
-    card: {
-        flexDirection: "row",
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: "#ddd",
-    },
-    image: {
-        width: 80,
-        height: 80,
-        marginRight: 10,
-    },
-    name: {
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    description: {
-        fontSize: 12,
-        color: "#555",
-    },
-    price: {
-        fontSize: 14,
-        marginTop: 5,
-    },
+    container: { flex: 1, backgroundColor: "#fff" },
+    loading: { marginTop: 20, textAlign: "center" },
+    card: { flexDirection: "row", padding: 10, borderBottomWidth: 1, borderBottomColor: "#ddd" },
+    image: { width: 80, height: 80, marginRight: 10 },
+    name: { fontSize: 16, fontWeight: "bold" },
+    description: { fontSize: 12, color: "#555" },
+    price: { fontSize: 14, marginTop: 5 },
+    textAboveCategories: { fontSize: 20, fontWeight: "800", marginTop: 40, marginLeft: 25 },
 });
