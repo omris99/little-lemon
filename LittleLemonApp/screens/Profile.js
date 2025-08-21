@@ -31,7 +31,7 @@ export default function Profile({navigation}) {
             navigation.dispatch(
                 CommonActions.reset({
                     index: 0,
-                    routes: [{ name: 'Onboarding' }],
+                    routes: [{name: 'Onboarding'}],
                 })
             );
         } catch (e) {
@@ -73,12 +73,22 @@ export default function Profile({navigation}) {
 
     return (
         <View style={styles.container}>
-            <ProfileHeader/>
+            <ProfileHeader
+            avatar={avatar}
+            firstName={firstName}
+            lastName={lastName}
+            />
             <ScrollView style={styles.container}>
                 <Text style={styles.header}>Personal information</Text>
                 <Text style={styles.subHeader}>Avatar</Text>
                 <View style={styles.avatarChangeSection}>
-                    <ProfileImage dim={{height: 60, width: 80}}/>
+                    <ProfileImage
+                        dim={{width: 50, height: 50}}
+                        avatar={avatar}
+                        firstName={firstName}
+                        lastName={lastName}
+                        onChange={(uri) => setAvatar(uri)}
+                    />
                     <Button
                         style={{backgroundColor: "#495E57", height: 45, width: 100, borderRadius: 10}}>Change</Button>
                     <Button style={{
@@ -166,7 +176,7 @@ export default function Profile({navigation}) {
                     }}
                             buttonText={{color: '#495E57'}}>Discard changes</Button>
                     <Button style={{height: 45, width: 150, borderRadius: 10}}
-                    onPress={handleSave}
+                            onPress={handleSave}
                     >Save changes</Button>
 
                 </View>
@@ -180,7 +190,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingHorizontal: 10
     },
     header: {
         fontSize: 20,
